@@ -1629,14 +1629,26 @@
                     
                     const settings = genreSettings[genre];
                     const moodAdj = moodAdjustments[mood];
-                    document.getElementById('musicProperties').innerHTML = `
-                        <div>🎵 Scale: ${settings.scale.charAt(0).toUpperCase() + settings.scale.slice(1)}</div>
-                        <div>🎼 Melody Style: ${settings.melodyStyle.charAt(0).toUpperCase() + settings.melodyStyle.slice(1)}</div>
-                        <div>🥁 Tempo: ${Math.round(settings.tempo * moodAdj.tempoMult)} BPM</div>
-                        <div>🎛️ Structure: Bass + Chords + Melody</div>
-                        <div>⏱️ Sample Rate: 44.1 kHz</div>
-                        ${prompt ? `<div>✨ Custom Prompt: "${prompt}"</div>` : ''}
-                    `;
+                    
+                    // Safely create DOM elements instead of using innerHTML
+                    const musicProps = document.getElementById('musicProperties');
+                    musicProps.textContent = ''; // Clear existing content
+                    
+                    const createPropertyDiv = (text) => {
+                        const div = document.createElement('div');
+                        div.textContent = text;
+                        return div;
+                    };
+                    
+                    musicProps.appendChild(createPropertyDiv(`🎵 Scale: ${settings.scale.charAt(0).toUpperCase() + settings.scale.slice(1)}`));
+                    musicProps.appendChild(createPropertyDiv(`🎼 Melody Style: ${settings.melodyStyle.charAt(0).toUpperCase() + settings.melodyStyle.slice(1)}`));
+                    musicProps.appendChild(createPropertyDiv(`🥁 Tempo: ${Math.round(settings.tempo * moodAdj.tempoMult)} BPM`));
+                    musicProps.appendChild(createPropertyDiv('🎛️ Structure: Bass + Chords + Melody'));
+                    musicProps.appendChild(createPropertyDiv('⏱️ Sample Rate: 44.1 kHz'));
+                    
+                    if (prompt) {
+                        musicProps.appendChild(createPropertyDiv(`✨ Custom Prompt: "${prompt}"`));
+                    }
                     
                 } catch (error) {
                     console.error('Error generating music:', error);
