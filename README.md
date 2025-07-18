@@ -1,4 +1,4 @@
-# 🎵 AI Music Generator
+# 🎵 Vibe Music Generator
 
 Create beautiful, melodic music instantly in your browser! No downloads, no setup required.
 
