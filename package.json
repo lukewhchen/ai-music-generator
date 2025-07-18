@@ -1,0 +1,32 @@
+{
+  "name": "ai-music-generator",
+  "version": "1.0.0",
+  "description": "AI-powered music generator with React frontend",
+  "main": "index.js",
+  "scripts": {
+    "dev": "cd react-version && npm run dev",
+    "build": "cd react-version && npm run build",
+    "deploy": "cd react-version && npm run deploy",
+    "install-deps": "cd react-version && npm install",
+    "start": "cd react-version && npm run dev"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lukewhchen/ai-music-generator.git"
+  },
+  "keywords": [
+    "ai",
+    "music",
+    "generator",
+    "react",
+    "vite",
+    "audio",
+    "synthesis"
+  ],
+  "author": "Luke Chen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/lukewhchen/ai-music-generator/issues"
+  },
+  "homepage": "https://lukewhchen.github.io/ai-music-generator"
+}

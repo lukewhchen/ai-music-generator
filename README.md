@@ -38,10 +38,12 @@ Each genre has its own unique characteristics:
 
 ## 🧠 The Technology
 
-- **Pure Web Audio API** - No external libraries or dependencies
+- **Modern React Architecture** - Built with React 18 and Vite for optimal performance
+- **Pure Web Audio API** - No external libraries or dependencies for audio synthesis
 - **Real Musical Theory** - Proper scales, chord progressions, and rhythms
 - **Instant Generation** - Everything runs in your browser
-- **Mobile Friendly** - Works on phones, tablets, and computers
+- **Mobile Friendly** - Responsive design works on phones, tablets, and computers
+- **GitHub Actions CI/CD** - Automated deployment to GitHub Pages
 
 ## 🔧 For Developers
 
@@ -51,11 +53,20 @@ Want to run this locally or build upon it?
 # Clone the repository
 git clone https://github.com/lukewhchen/ai-music-generator.git
 
-# Open the main file
-open index.html
+# Install dependencies and start development server
+cd ai-music-generator
+npm run install-deps
+npm run dev
+
+# Or build for production
+npm run build
 ```
 
-The repository also includes `generate_music_local.py` - a Python version with the same musical algorithms for server-side use.
+**Project Structure:**
+
+- `react-version/` - Modern React application (main version)
+- `index.html` - Legacy HTML version (for reference)
+- `generate_music_local.py` - Python version with same musical algorithms
 
 ## � License
 
