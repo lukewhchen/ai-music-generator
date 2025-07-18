@@ -606,6 +606,239 @@
         let currentSource = null;
         let currentlyPlaying = null;
 
+        // Advanced synthesis functions for realistic instrument sounds
+        class EnhancedSynthesis {
+            static generateADSR(attack, decay, sustain, release, duration, sampleRate) {
+                const totalSamples = Math.floor(duration * sampleRate);
+                const attackSamples = Math.floor(attack * sampleRate);
+                const decaySamples = Math.floor(decay * sampleRate);
+                const releaseSamples = Math.floor(release * sampleRate);
+                const sustainSamples = totalSamples - attackSamples - decaySamples - releaseSamples;
+                
+                const envelope = new Float32Array(totalSamples);
+                
+                // Attack
+                for (let i = 0; i < attackSamples && i < totalSamples; i++) {
+                    envelope[i] = i / attackSamples;
+                }
+                
+                // Decay
+                for (let i = 0; i < decaySamples && (attackSamples + i) < totalSamples; i++) {
+                    envelope[attackSamples + i] = 1 - (1 - sustain) * (i / decaySamples);
+                }
+                
+                // Sustain
+                for (let i = 0; i < sustainSamples && (attackSamples + decaySamples + i) < totalSamples; i++) {
+                    envelope[attackSamples + decaySamples + i] = sustain;
+                }
+                
+                // Release
+                for (let i = 0; i < releaseSamples && (totalSamples - releaseSamples + i) < totalSamples; i++) {
+                    envelope[totalSamples - releaseSamples + i] = sustain * (1 - i / releaseSamples);
+                }
+                
+                return envelope;
+            }
+            
+            static synthesizePiano(frequency, duration, velocity, sampleRate) {
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                // Multiple harmonics for piano timbre
+                const harmonics = [
+                    {freq: 1.0, amp: 0.8, phase: 0},
+                    {freq: 2.0, amp: 0.4, phase: 0.1},
+                    {freq: 3.0, amp: 0.2, phase: 0.2},
+                    {freq: 4.0, amp: 0.1, phase: 0.3},
+                    {freq: 5.0, amp: 0.05, phase: 0.4},
+                    {freq: 6.0, amp: 0.03, phase: 0.5}
+                ];
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    let sample = 0;
+                    
+                    for (const harmonic of harmonics) {
+                        // Add slight inharmonicity for realism
+                        const inharmonicity = 1 + 0.0001 * harmonic.freq * harmonic.freq;
+                        const harmonicFreq = frequency * harmonic.freq * inharmonicity;
+                        
+                        sample += harmonic.amp * velocity * Math.sin(2 * Math.PI * harmonicFreq * t + harmonic.phase);
+                    }
+                    
+                    signal[i] = sample;
+                }
+                
+                // Piano ADSR envelope
+                const envelope = this.generateADSR(0.01, 0.3, 0.3, 0.8, duration, sampleRate);
+                
+                // Apply envelope
+                for (let i = 0; i < samples; i++) {
+                    signal[i] *= envelope[i];
+                }
+                
+                return signal;
+            }
+            
+            static synthesizeBass(frequency, duration, velocity, sampleRate) {
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    
+                    // Rich bass harmonics
+                    const fundamental = 0.8 * Math.sin(2 * Math.PI * frequency * t);
+                    const second = 0.3 * Math.sin(2 * Math.PI * frequency * 2 * t);
+                    const third = 0.15 * Math.sin(2 * Math.PI * frequency * 3 * t);
+                    const sub = 0.2 * Math.sin(2 * Math.PI * frequency * 0.5 * t);
+                    
+                    signal[i] = velocity * (fundamental + second + third + sub);
+                }
+                
+                // Bass ADSR with punchy attack
+                const envelope = this.generateADSR(0.005, 0.1, 0.7, 0.3, duration, sampleRate);
+                
+                for (let i = 0; i < samples; i++) {
+                    signal[i] *= envelope[i];
+                }
+                
+                return signal;
+            }
+            
+            static synthesizeElectricPiano(frequency, duration, velocity, sampleRate) {
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    
+                    // Bell-like harmonics for electric piano
+                    const fundamental = 0.8 * Math.sin(2 * Math.PI * frequency * t);
+                    const second = 0.3 * Math.sin(2 * Math.PI * frequency * 2 * t);
+                    const third = 0.15 * Math.sin(2 * Math.PI * frequency * 3 * t);
+                    
+                    // Add tremolo for electric piano character
+                    const tremolo = 1 + 0.1 * Math.sin(2 * Math.PI * 5 * t);
+                    
+                    signal[i] = velocity * (fundamental + second + third) * tremolo;
+                }
+                
+                // Electric piano ADSR
+                const envelope = this.generateADSR(0.01, 0.5, 0.4, 1.2, duration, sampleRate);
+                
+                for (let i = 0; i < samples; i++) {
+                    signal[i] *= envelope[i];
+                }
+                
+                return signal;
+            }
+            
+            static synthesizePad(frequency, duration, velocity, sampleRate) {
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    
+                    // Multiple detuned oscillators for pad thickness
+                    const osc1 = Math.sin(2 * Math.PI * frequency * t);
+                    const osc2 = Math.sin(2 * Math.PI * frequency * 1.003 * t);
+                    const osc3 = Math.sin(2 * Math.PI * frequency * 0.997 * t);
+                    
+                    // Filter sweep for movement
+                    const cutoffSweep = 0.5 + 0.5 * Math.sin(2 * Math.PI * 0.1 * t);
+                    
+                    signal[i] = velocity * (osc1 + osc2 + osc3) / 3 * cutoffSweep;
+                }
+                
+                // Pad ADSR with slow attack
+                const envelope = this.generateADSR(0.5, 0.3, 0.8, 1.0, duration, sampleRate);
+                
+                for (let i = 0; i < samples; i++) {
+                    signal[i] *= envelope[i];
+                }
+                
+                return signal;
+            }
+        }
+        
+        // Enhanced drum synthesis
+        class DrumSynthesis {
+            static generateKick(sampleRate) {
+                const duration = 0.15;
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    
+                    // Frequency sweep from 80Hz to 30Hz
+                    const freqSweep = 80 * Math.exp(-t * 20);
+                    const phase = 2 * Math.PI * freqSweep * t;
+                    
+                    // Kick drum tone
+                    const tone = Math.sin(phase);
+                    
+                    // Click for punch
+                    const click = Math.random() * 0.5 * Math.exp(-t * 100);
+                    
+                    // Envelope
+                    const envelope = Math.exp(-t * 15);
+                    
+                    signal[i] = (tone + click) * envelope * 0.8;
+                }
+                
+                return signal;
+            }
+            
+            static generateSnare(sampleRate) {
+                const duration = 0.1;
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    
+                    // Tone component
+                    const tone = 0.3 * Math.sin(2 * Math.PI * 200 * t);
+                    
+                    // Noise component
+                    const noise = (Math.random() - 0.5) * 0.7;
+                    
+                    // Envelope
+                    const envelope = Math.exp(-t * 30);
+                    
+                    signal[i] = (tone + noise) * envelope * 0.6;
+                }
+                
+                return signal;
+            }
+            
+            static generateHiHat(sampleRate) {
+                const duration = 0.05;
+                const samples = Math.floor(duration * sampleRate);
+                const signal = new Float32Array(samples);
+                
+                for (let i = 0; i < samples; i++) {
+                    const t = i / sampleRate;
+                    
+                    // High-frequency noise
+                    const noise = (Math.random() - 0.5) * 0.8;
+                    
+                    // High-pass filter effect (simplified)
+                    const filtered = i > 0 ? noise - signal[i-1] * 0.5 : noise;
+                    
+                    // Envelope
+                    const envelope = Math.exp(-t * 80);
+                    
+                    signal[i] = filtered * envelope * 0.4;
+                }
+                
+                return signal;
+            }
+        }
+        
         // Initialize audio context
         function initAudio() {
             if (!audioContext) {
@@ -613,69 +846,145 @@
             }
         }
 
-        // Musical note frequencies (12-tone equal temperament)
+        // Enhanced Musical note frequencies with extended range
         const noteFrequencies = {
+            // Extended bass range
+            'C1': 32.70, 'C#1': 34.65, 'D1': 36.71, 'D#1': 38.89, 'E1': 41.20,
+            'F1': 43.65, 'F#1': 46.25, 'G1': 49.00, 'G#1': 51.91, 'A1': 55.00,
+            'A#1': 58.27, 'B1': 61.74,
+            
+            'C2': 65.41, 'C#2': 69.30, 'D2': 73.42, 'D#2': 77.78, 'E2': 82.41,
+            'F2': 87.31, 'F#2': 92.50, 'G2': 98.00, 'G#2': 103.83, 'A2': 110.00,
+            'A#2': 116.54, 'B2': 123.47,
+            
+            'C3': 130.81, 'C#3': 138.59, 'D3': 146.83, 'D#3': 155.56, 'E3': 164.81,
+            'F3': 174.61, 'F#3': 185.00, 'G3': 196.00, 'G#3': 207.65, 'A3': 220.00,
+            'A#3': 233.08, 'B3': 246.94,
+            
             'C4': 261.63, 'C#4': 277.18, 'D4': 293.66, 'D#4': 311.13, 'E4': 329.63,
             'F4': 349.23, 'F#4': 369.99, 'G4': 392.00, 'G#4': 415.30, 'A4': 440.00,
             'A#4': 466.16, 'B4': 493.88,
+            
             'C5': 523.25, 'C#5': 554.37, 'D5': 587.33, 'D#5': 622.25, 'E5': 659.25,
             'F5': 698.46, 'F#5': 739.99, 'G5': 783.99, 'G#5': 830.61, 'A5': 880.00,
             'A#5': 932.33, 'B5': 987.77,
-            'C3': 130.81, 'D3': 146.83, 'E3': 164.81, 'F3': 174.61, 'G3': 196.00,
-            'A3': 220.00, 'B3': 246.94
+            
+            'C6': 1046.50, 'C#6': 1108.73, 'D6': 1174.66, 'D#6': 1244.51, 'E6': 1318.51,
+            'F6': 1396.91, 'F#6': 1479.98, 'G6': 1567.98, 'G#6': 1661.22, 'A6': 1760.00,
+            'A#6': 1864.66, 'B6': 1975.53
         };
 
-        // Musical scales
+        // Enhanced musical scales with modes
         const scales = {
             'major': ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
             'minor': ['C4', 'D4', 'D#4', 'F4', 'G4', 'G#4', 'A#4', 'C5'],
+            'dorian': ['C4', 'D4', 'D#4', 'F4', 'G4', 'A4', 'A#4', 'C5'],
+            'phrygian': ['C4', 'C#4', 'D#4', 'F4', 'G4', 'G#4', 'A#4', 'C5'],
+            'lydian': ['C4', 'D4', 'E4', 'F#4', 'G4', 'A4', 'B4', 'C5'],
+            'mixolydian': ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'A#4', 'C5'],
             'pentatonic': ['C4', 'D4', 'E4', 'G4', 'A4', 'C5'],
-            'dorian': ['C4', 'D4', 'D#4', 'F4', 'G4', 'A4', 'A#4', 'C5']
+            'blues': ['C4', 'D#4', 'F4', 'F#4', 'G4', 'A#4', 'C5'],
+            'harmonic_minor': ['C4', 'D4', 'D#4', 'F4', 'G4', 'G#4', 'B4', 'C5'],
+            'jazz': ['C4', 'D4', 'D#4', 'F4', 'G4', 'A4', 'A#4', 'C5']
         };
 
-        // Genre-specific musical settings
+        // Enhanced genre-specific musical settings with advanced features
         const genreSettings = {
             'Electronic': {
-                scale: 'minor',
+                scale: 'harmonic_minor',
                 tempo: 128,
-                bassNotes: ['C3', 'F3', 'G3', 'D#3'],
-                chordProgression: [['C4', 'D#4', 'G4'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5'], ['D#4', 'G4', 'A#4']],
-                melodyStyle: 'arpeggiated'
+                bassNotes: ['C2', 'F2', 'G2', 'D#2'],
+                chordProgression: [
+                    ['C4', 'D#4', 'G4', 'A#4'], ['F4', 'A4', 'C5', 'D#5'], 
+                    ['G4', 'B4', 'D5', 'F5'], ['D#4', 'G4', 'A#4', 'D5']
+                ],
+                melodyStyle: 'arpeggiated',
+                drumStyle: 'four_on_floor',
+                effects: ['reverb', 'delay', 'filter_sweep']
+            },
+            'Jazz': {
+                scale: 'dorian',
+                tempo: 120,
+                bassNotes: ['C2', 'F2', 'G2', 'A2'],
+                chordProgression: [
+                    ['C4', 'E4', 'G4', 'B4'], ['F4', 'A4', 'C5', 'E5'], 
+                    ['G4', 'B4', 'D5', 'F5'], ['A4', 'C5', 'E5', 'G5']
+                ],
+                melodyStyle: 'jazz_walking',
+                drumStyle: 'jazz_swing',
+                effects: ['warm_reverb', 'vintage_compression']
             },
             'K-Pop': {
                 scale: 'major',
                 tempo: 120,
-                bassNotes: ['C3', 'G3', 'A3', 'F3'],
-                chordProgression: [['C4', 'E4', 'G4'], ['A4', 'C5', 'E5'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5']],
-                melodyStyle: 'catchy_pop'
+                bassNotes: ['C2', 'G2', 'A2', 'F2'],
+                chordProgression: [
+                    ['C4', 'E4', 'G4', 'B4'], ['A4', 'C5', 'E5', 'G5'], 
+                    ['F4', 'A4', 'C5', 'E5'], ['G4', 'B4', 'D5', 'F5']
+                ],
+                melodyStyle: 'catchy_pop',
+                drumStyle: 'kpop_groove',
+                effects: ['bright_eq', 'compression', 'stereo_widening']
             },
             'Classical': {
                 scale: 'major',
                 tempo: 120,
-                bassNotes: ['C3', 'F3', 'G3', 'C3'],
-                chordProgression: [['C4', 'E4', 'G4'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5'], ['C4', 'E4', 'G4']],
-                melodyStyle: 'stepwise'
+                bassNotes: ['C2', 'F2', 'G2', 'C2'],
+                chordProgression: [
+                    ['C4', 'E4', 'G4'], ['F4', 'A4', 'C5'], 
+                    ['G4', 'B4', 'D5'], ['C4', 'E4', 'G4']
+                ],
+                melodyStyle: 'stepwise',
+                drumStyle: null,
+                effects: ['hall_reverb', 'natural_dynamics']
             },
             'Lo-fi Hip-Hop': {
                 scale: 'pentatonic',
                 tempo: 85,
-                bassNotes: ['C3', 'D3', 'F3', 'G3'],
-                chordProgression: [['C4', 'E4', 'G4'], ['D4', 'F4', 'A4'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5']],
-                melodyStyle: 'relaxed'
+                bassNotes: ['C2', 'D2', 'F2', 'G2'],
+                chordProgression: [
+                    ['C4', 'E4', 'G4', 'B4'], ['D4', 'F4', 'A4', 'C5'], 
+                    ['F4', 'A4', 'C5', 'E5'], ['G4', 'B4', 'D5', 'F5']
+                ],
+                melodyStyle: 'relaxed',
+                drumStyle: 'lofi_hip_hop',
+                effects: ['vinyl_crackle', 'low_pass_filter', 'tape_saturation']
             },
             'Ambient': {
-                scale: 'dorian',
+                scale: 'lydian',
                 tempo: 60,
-                bassNotes: ['C3', 'D3', 'F3', 'G3'],
-                chordProgression: [['C4', 'D#4', 'G4'], ['D4', 'F4', 'A4'], ['F4', 'G#4', 'C5'], ['G4', 'A#4', 'D5']],
-                melodyStyle: 'floating'
+                bassNotes: ['C2', 'D2', 'F2', 'G2'],
+                chordProgression: [
+                    ['C4', 'E4', 'G4', 'B4', 'D5'], ['D4', 'F#4', 'A4', 'C5', 'E5'], 
+                    ['F4', 'A4', 'C5', 'E5', 'G5'], ['G4', 'B4', 'D5', 'F#5', 'A5']
+                ],
+                melodyStyle: 'floating',
+                drumStyle: null,
+                effects: ['deep_reverb', 'chorus', 'long_delay']
             },
             'Rock': {
-                scale: 'minor',
+                scale: 'blues',
                 tempo: 140,
-                bassNotes: ['C3', 'D#3', 'F3', 'G3'],
-                chordProgression: [['C4', 'D#4', 'G4'], ['D#4', 'G4', 'A#4'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5']],
-                melodyStyle: 'powerful'
+                bassNotes: ['C2', 'D#2', 'F2', 'G2'],
+                chordProgression: [
+                    ['C4', 'D#4', 'G4'], ['D#4', 'G4', 'A#4'], 
+                    ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5']
+                ],
+                melodyStyle: 'powerful',
+                drumStyle: 'rock_beat',
+                effects: ['distortion', 'overdrive', 'compression']
+            },
+            'Funk': {
+                scale: 'mixolydian',
+                tempo: 110,
+                bassNotes: ['C2', 'D2', 'F2', 'G2'],
+                chordProgression: [
+                    ['C4', 'E4', 'G4', 'A#4'], ['F4', 'A4', 'C5', 'D#5'], 
+                    ['G4', 'B4', 'D5', 'F5'], ['C4', 'E4', 'G4', 'A#4']
+                ],
+                melodyStyle: 'syncopated',
+                drumStyle: 'funk_groove',
+                effects: ['wah_filter', 'compression', 'stereo_imaging']
             }
         };
 
@@ -774,28 +1083,38 @@
             const actualTempo = settings.tempo * moodAdj.tempoMult;
             const beatDuration = 60.0 / actualTempo;
             
-            // Create separate layers
+            // Create separate layers with enhanced synthesis
             const bassAudio = generateBassLine(settings.bassNotes, duration, sampleRate, beatDuration, moodAdj);
             const chordAudio = generateChordProgression(settings.chordProgression, duration, sampleRate, beatDuration, moodAdj, genre);
             const melodyAudio = generateMelody(scales[settings.scale], settings.melodyStyle, duration, sampleRate, beatDuration, moodAdj, mood);
             
-            // Mix layers
+            // Add drum layer if specified
+            let drumAudio = new Float32Array(samples);
+            if (settings.drumStyle && settings.drumStyle !== null) {
+                drumAudio = generateDrumPattern(settings.drumStyle, duration, sampleRate, beatDuration, moodAdj);
+            }
+            
+            // Mix layers with enhanced balance
             const audioBuffer = audioContext.createBuffer(1, samples, sampleRate);
             const channelData = audioBuffer.getChannelData(0);
             
-            const bassLevel = 0.4 * moodAdj.energy;
-            const chordLevel = 0.3;
-            const melodyLevel = 0.5 * moodAdj.brightness;
+            const bassLevel = 0.35 * moodAdj.energy;
+            const chordLevel = 0.25;
+            const melodyLevel = 0.45 * moodAdj.brightness;
+            const drumLevel = 0.3 * moodAdj.energy;
             
             for (let i = 0; i < samples; i++) {
                 let sample = 0;
                 if (i < bassAudio.length) sample += bassLevel * bassAudio[i];
                 if (i < chordAudio.length) sample += chordLevel * chordAudio[i];
                 if (i < melodyAudio.length) sample += melodyLevel * melodyAudio[i];
+                if (i < drumAudio.length) sample += drumLevel * drumAudio[i];
                 
                 // Add genre-specific effects
                 if (genre === 'Lo-fi Hip-Hop') {
                     sample += (Math.random() - 0.5) * 0.02; // Vinyl noise
+                    // Simple low-pass filter effect
+                    if (i > 0) sample = 0.8 * sample + 0.2 * channelData[i-1];
                 } else if (genre === 'K-Pop') {
                     // APT.-inspired effects: compression and brightness
                     sample = Math.tanh(sample * 1.2) * 0.9; // Compression
@@ -804,6 +1123,15 @@
                     sample *= syncopation;
                 } else if (genre === 'Rock') {
                     sample = Math.tanh(sample * (1 + moodAdj.energy)) / (1 + moodAdj.energy); // Distortion
+                } else if (genre === 'Jazz') {
+                    // Add warm compression
+                    sample = Math.tanh(sample * 0.8) * 1.1;
+                } else if (genre === 'Ambient') {
+                    // Add reverb simulation
+                    const reverbDelay = Math.floor(0.03 * sampleRate);
+                    if (i > reverbDelay) {
+                        sample += 0.2 * channelData[i - reverbDelay];
+                    }
                 }
                 
                 channelData[i] = sample * 0.8;
@@ -822,7 +1150,7 @@
             return audioBuffer;
         }
 
-        // Generate bass line
+        // Enhanced bass line generation with realistic synthesis
         function generateBassLine(bassNotes, duration, sampleRate, beatDuration, moodAdj) {
             const samples = duration * sampleRate;
             const audio = new Float32Array(samples);
@@ -843,21 +1171,14 @@
                     
                     if (endSample <= samples) {
                         const noteDuration = noteEnd - noteStart;
-                        const freq = noteFrequencies[note] * 0.5; // Octave down for bass
+                        const freq = noteFrequencies[note] || 65.41; // Default to C2
                         
-                        for (let k = startSample; k < endSample; k++) {
-                            const t = (k - startSample) / sampleRate;
-                            const wave = 0.6 * Math.sin(2 * Math.PI * freq * t) +
-                                        0.2 * Math.sin(2 * Math.PI * freq * 2 * t);
-                            
-                            // Envelope
-                            let env = 1;
-                            const attackSamples = Math.min(endSample - startSample, sampleRate * 0.01);
-                            if (k - startSample < attackSamples) {
-                                env = (k - startSample) / attackSamples;
-                            }
-                            
-                            audio[k] += wave * env;
+                        // Use enhanced bass synthesis
+                        const bassSound = EnhancedSynthesis.synthesizeBass(freq, noteDuration, 0.8 * moodAdj.energy, sampleRate);
+                        
+                        // Add to audio buffer
+                        for (let k = 0; k < bassSound.length && (startSample + k) < samples; k++) {
+                            audio[startSample + k] += bassSound[k];
                         }
                     }
                 });
@@ -866,7 +1187,7 @@
             return audio;
         }
 
-        // Generate chord progression
+        // Enhanced chord progression generation
         function generateChordProgression(chordProgression, duration, sampleRate, beatDuration, moodAdj, genre) {
             const samples = duration * sampleRate;
             const audio = new Float32Array(samples);
@@ -883,22 +1204,34 @@
                 const endSample = Math.floor(chordEnd * sampleRate);
                 
                 if (endSample <= samples) {
-                    chord.forEach(note => {
-                        const freq = noteFrequencies[note];
+                    const chordDur = chordEnd - chordStart;
+                    
+                    // Generate each chord tone with enhanced synthesis
+                    for (const note of chord) {
+                        const freq = noteFrequencies[note] || 261.63;
+                        let chordTone;
                         
-                        for (let k = startSample; k < endSample; k++) {
-                            const t = (k - startSample) / sampleRate;
-                            let wave = 0.3 * Math.sin(2 * Math.PI * freq * t);
-                            
-                            // Add rhythm for certain genres
-                            if (genre === 'Electronic' || genre === 'Rock') {
-                                const rhythm = 1 + 0.4 * Math.sin(2 * Math.PI * (1/beatDuration) * t);
-                                wave *= rhythm;
-                            }
-                            
-                            audio[k] += wave;
+                        // Choose instrument based on genre
+                        if (genre === 'Jazz' || genre === 'Classical') {
+                            chordTone = EnhancedSynthesis.synthesizePiano(freq, chordDur, 0.4 * moodAdj.brightness, sampleRate);
+                        } else {
+                            chordTone = EnhancedSynthesis.synthesizeElectricPiano(freq, chordDur, 0.3 * moodAdj.brightness, sampleRate);
                         }
-                    });
+                        
+                        // Add rhythmic emphasis for certain genres
+                        if (genre === 'Electronic' || genre === 'Rock') {
+                            for (let k = 0; k < chordTone.length; k++) {
+                                const t = k / sampleRate;
+                                const rhythm = 1 + 0.3 * Math.sin(2 * Math.PI * (1/beatDuration) * t);
+                                chordTone[k] *= rhythm;
+                            }
+                        }
+                        
+                        // Add to audio buffer
+                        for (let k = 0; k < chordTone.length && (startSample + k) < samples; k++) {
+                            audio[startSample + k] += chordTone[k];
+                        }
+                    }
                 }
             }
             
@@ -966,7 +1299,7 @@
                 }
             }
             
-            // Generate audio for melody
+            // Generate audio for melody with enhanced synthesis
             melodyNotes.forEach((note, i) => {
                 const noteStart = i * noteDuration;
                 const noteEnd = noteStart + noteDuration * 0.9;
@@ -983,26 +1316,199 @@
                     if (mood === 'Sad') freq *= 0.95;
                     else if (mood === 'Happy') freq *= 1.02;
                     
-                    for (let k = startSample; k < endSample; k++) {
-                        const t = (k - startSample) / sampleRate;
-                        const wave = 0.4 * Math.sin(2 * Math.PI * freq * t) +
-                                    0.1 * Math.sin(2 * Math.PI * freq * 2 * t);
-                        
-                        // Note envelope
-                        let env = 1;
-                        const attackSamples = Math.min(endSample - startSample, sampleRate * 0.02);
-                        const decaySamples = Math.min(endSample - startSample, sampleRate * 0.1);
-                        
-                        if (k - startSample < attackSamples) {
-                            env = (k - startSample) / attackSamples;
-                        } else if (endSample - k < decaySamples) {
-                            env = (endSample - k) / decaySamples * 0.5 + 0.5;
-                        }
-                        
-                        audio[k] += wave * env;
+                    const noteDur = noteEnd - noteStart;
+                    
+                    // Use enhanced synthesis for melody
+                    let melodyTone;
+                    if (style === 'jazz_walking') {
+                        melodyTone = EnhancedSynthesis.synthesizePiano(freq, noteDur, 0.6 * moodAdj.brightness, sampleRate);
+                    } else if (style === 'floating') {
+                        melodyTone = EnhancedSynthesis.synthesizePad(freq, noteDur, 0.4 * moodAdj.brightness, sampleRate);
+                    } else {
+                        melodyTone = EnhancedSynthesis.synthesizeElectricPiano(freq, noteDur, 0.5 * moodAdj.brightness, sampleRate);
+                    }
+                    
+                    // Add to audio buffer
+                    for (let k = 0; k < melodyTone.length && (startSample + k) < samples; k++) {
+                        audio[startSample + k] += melodyTone[k];
                     }
                 }
             });
+            
+            return audio;
+        }
+        
+        // Enhanced drum pattern generation
+        function generateDrumPattern(style, duration, sampleRate, beatDuration, moodAdj) {
+            const samples = duration * sampleRate;
+            const audio = new Float32Array(samples);
+            
+            const beatsPerMeasure = 4;
+            const measureDuration = beatDuration * beatsPerMeasure;
+            
+            for (let measure = 0; measure < Math.ceil(duration / measureDuration); measure++) {
+                const measureStart = measure * measureDuration;
+                
+                for (let beat = 0; beat < beatsPerMeasure; beat++) {
+                    const beatStart = measureStart + beat * beatDuration;
+                    if (beatStart >= duration) break;
+                    
+                    const startSample = Math.floor(beatStart * sampleRate);
+                    
+                    if (style === 'four_on_floor') {
+                        // Kick on every beat
+                        const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                        for (let i = 0; i < kickSamples.length && (startSample + i) < samples; i++) {
+                            audio[startSample + i] += kickSamples[i] * moodAdj.energy;
+                        }
+                        
+                        // Hi-hat on off-beats
+                        if (beat % 2 === 1) {
+                            const hihatSamples = DrumSynthesis.generateHiHat(sampleRate);
+                            const hihatStart = startSample + Math.floor(beatDuration * 0.5 * sampleRate);
+                            for (let i = 0; i < hihatSamples.length && (hihatStart + i) < samples; i++) {
+                                audio[hihatStart + i] += hihatSamples[i] * 0.6;
+                            }
+                        }
+                    } else if (style === 'kpop_groove') {
+                        // K-Pop style kick pattern
+                        if (beat === 0 || beat === 2) {
+                            const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                            for (let i = 0; i < kickSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += kickSamples[i] * moodAdj.energy;
+                            }
+                        }
+                        
+                        // Snare on beat 2 and 4
+                        if (beat === 1 || beat === 3) {
+                            const snareSamples = DrumSynthesis.generateSnare(sampleRate);
+                            for (let i = 0; i < snareSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += snareSamples[i] * 0.8;
+                            }
+                        }
+                        
+                        // Hi-hats with APT.-style syncopation
+                        const hihatSamples = DrumSynthesis.generateHiHat(sampleRate);
+                        const syncopationPattern = [1.0, 0.6, 0.8, 0.4];
+                        const intensity = syncopationPattern[beat] * 0.5;
+                        for (let i = 0; i < hihatSamples.length && (startSample + i) < samples; i++) {
+                            audio[startSample + i] += hihatSamples[i] * intensity;
+                        }
+                    } else if (style === 'rock_beat') {
+                        // Rock drumbeat
+                        if (beat === 0 || beat === 2) {
+                            const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                            for (let i = 0; i < kickSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += kickSamples[i] * moodAdj.energy * 1.2;
+                            }
+                        }
+                        
+                        if (beat === 1 || beat === 3) {
+                            const snareSamples = DrumSynthesis.generateSnare(sampleRate);
+                            for (let i = 0; i < snareSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += snareSamples[i] * 1.0;
+                            }
+                        }
+                        
+                        // Consistent hi-hats
+                        const hihatSamples = DrumSynthesis.generateHiHat(sampleRate);
+                        for (let i = 0; i < hihatSamples.length && (startSample + i) < samples; i++) {
+                            audio[startSample + i] += hihatSamples[i] * 0.7;
+                        }
+                    } else if (style === 'lofi_hip_hop') {
+                        // Lo-fi hip-hop with swing
+                        const swingOffset = beat % 2 === 1 ? beatDuration * 0.1 : 0;
+                        const swingStart = startSample + Math.floor(swingOffset * sampleRate);
+                        
+                        if (beat === 0 || beat === 2) {
+                            const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                            for (let i = 0; i < kickSamples.length && (swingStart + i) < samples; i++) {
+                                audio[swingStart + i] += kickSamples[i] * moodAdj.energy * 0.8;
+                            }
+                        }
+                        
+                        if (beat === 1 || beat === 3) {
+                            const snareSamples = DrumSynthesis.generateSnare(sampleRate);
+                            for (let i = 0; i < snareSamples.length && (swingStart + i) < samples; i++) {
+                                audio[swingStart + i] += snareSamples[i] * 0.6;
+                            }
+                        }
+                        
+                        // Subtle hi-hats with swing
+                        const hihatSamples = DrumSynthesis.generateHiHat(sampleRate);
+                        for (let i = 0; i < hihatSamples.length && (swingStart + i) < samples; i++) {
+                            audio[swingStart + i] += hihatSamples[i] * 0.3;
+                        }
+                    } else if (style === 'jazz_swing') {
+                        // Jazz swing pattern
+                        const swingRatio = 2.0; // Strong swing feel
+                        const swingOffset = beat % 2 === 1 ? beatDuration * 0.15 : 0;
+                        const swingStart = startSample + Math.floor(swingOffset * sampleRate);
+                        
+                        if (beat === 0 || beat === 2) {
+                            const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                            for (let i = 0; i < kickSamples.length && (swingStart + i) < samples; i++) {
+                                audio[swingStart + i] += kickSamples[i] * moodAdj.energy * 0.7;
+                            }
+                        }
+                        
+                        // Jazz brushes on snare (softer)
+                        if (beat === 1 || beat === 3) {
+                            const snareSamples = DrumSynthesis.generateSnare(sampleRate);
+                            for (let i = 0; i < snareSamples.length && (swingStart + i) < samples; i++) {
+                                audio[swingStart + i] += snareSamples[i] * 0.4;
+                            }
+                        }
+                        
+                        // Swinging hi-hats
+                        const hihatSamples = DrumSynthesis.generateHiHat(sampleRate);
+                        const jazzPattern = [0.8, 0.3, 0.6, 0.2];
+                        const intensity = jazzPattern[beat] * 0.4;
+                        for (let i = 0; i < hihatSamples.length && (swingStart + i) < samples; i++) {
+                            audio[swingStart + i] += hihatSamples[i] * intensity;
+                        }
+                    } else if (style === 'funk_groove') {
+                        // Funk groove with emphasis on the one
+                        if (beat === 0) {
+                            const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                            for (let i = 0; i < kickSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += kickSamples[i] * moodAdj.energy * 1.3;
+                            }
+                        } else if (beat === 2) {
+                            // Lighter kick on 3
+                            const kickSamples = DrumSynthesis.generateKick(sampleRate);
+                            for (let i = 0; i < kickSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += kickSamples[i] * moodAdj.energy * 0.6;
+                            }
+                        }
+                        
+                        // Funky snare pattern
+                        if (beat === 1) {
+                            const snareSamples = DrumSynthesis.generateSnare(sampleRate);
+                            for (let i = 0; i < snareSamples.length && (startSample + i) < samples; i++) {
+                                audio[startSample + i] += snareSamples[i] * 0.9;
+                            }
+                        }
+                        
+                        // Sixteenth note hi-hats with funk accents
+                        const hihatSamples = DrumSynthesis.generateHiHat(sampleRate);
+                        const funkPattern = [1.0, 0.4, 0.7, 0.3];
+                        const intensity = funkPattern[beat] * 0.6;
+                        for (let i = 0; i < hihatSamples.length && (startSample + i) < samples; i++) {
+                            audio[startSample + i] += hihatSamples[i] * intensity;
+                        }
+                        
+                        // Add ghost notes (subtle snare hits)
+                        if (beat !== 1 && Math.random() < 0.3) {
+                            const ghostSamples = DrumSynthesis.generateSnare(sampleRate);
+                            const ghostStart = startSample + Math.floor(beatDuration * 0.25 * sampleRate);
+                            for (let i = 0; i < ghostSamples.length && (ghostStart + i) < samples; i++) {
+                                audio[ghostStart + i] += ghostSamples[i] * 0.15;
+                            }
+                        }
+                    }
+                }
+            }
             
             return audio;
         }
