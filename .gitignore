@@ -205,3 +205,58 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js / npm
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.npm
+.yarn-integrity
+
+# Build outputs
+dist/
+build/
+*.tgz
+*.tar.gz
+
+# Audio files (generated music)
+*.wav
+*.mp3
+*.midi
+*.mid
+*.ogg
+*.flac
+*.aiff
+*.m4a
+outputs/
+generated_music/
+audio_output/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# IDE and editor files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+*.swp
+*.swo
+*~
+
+# Project specific
+*.backup
+vite.config.js.new
