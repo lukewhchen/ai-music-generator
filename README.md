@@ -3,7 +3,9 @@
 Create beautiful, melodic music instantly in your browser! No downloads, no setup required.
 
 ## 🌐 **Try It Live**
-### **<a href="https://lukewhchen.github.io/ai-music-generator/" target="_blank">🎵 Launch Music Generator →</a>**
+### **[🎵 Launch Music Generator →](https://lukewhchen.github.io/ai-music-generator/)**
+
+*💡 Tip: Right-click the link above and select "Open in new tab" to keep this README open while you explore!*
 
 ---
 
@@ -18,7 +20,7 @@ Create beautiful, melodic music instantly in your browser! No downloads, no setu
 
 ## � How to Use
 
-1. **<a href="https://lukewhchen.github.io/ai-music-generator/" target="_blank">Open the generator</a>**
+1. **[Open the generator](https://lukewhchen.github.io/ai-music-generator/)**
 2. **Browse samples** or **create custom music**
 3. **Click play** and enjoy!
 
@@ -61,4 +63,4 @@ MIT License - feel free to use, modify, and share!
 
 ---
 
-**<a href="https://lukewhchen.github.io/ai-music-generator/" target="_blank">🎵 Start Making Music Now →</a>**
+**[🎵 Start Making Music Now →](https://lukewhchen.github.io/ai-music-generator/)**
