@@ -1,9 +1,9 @@
 """
 AI Music Generator Module
 
-This module contains the core music generation functionality.
-For demonstration purposes, this creates a simple synthetic audio.
-Replace this with your actual AI music generation implementation.
+This module contains the core music generation functionality with K-Pop support.
+Features APT.-inspired rhythmic patterns and melodic structures.
+Supports multiple genres including K-Pop with authentic beats and progressions.
 """
 
 import numpy as np
@@ -19,7 +19,7 @@ def generate_music(genre: str = "Electronic",
     Generate music with proper melody, chord progressions, and rhythm.
     
     Args:
-        genre: The music genre (e.g., 'Electronic', 'Classical', 'Lo-fi Hip-Hop', 'Ambient', 'Rock')
+        genre: The music genre (e.g., 'Electronic', 'K-Pop', 'Classical', 'Lo-fi Hip-Hop', 'Ambient', 'Rock')
         mood: The desired mood (e.g., 'Happy', 'Sad', 'Relaxed', 'Energetic', 'Mysterious')
         duration_seconds: Length of the generated music in seconds (5-30)
         custom_prompt: Optional custom prompt for music generation
@@ -61,6 +61,13 @@ def generate_music(genre: str = "Electronic",
             'bass_notes': ['C3', 'F3', 'G3', 'D#3'],
             'chord_progression': [['C4', 'D#4', 'G4'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5'], ['D#4', 'G4', 'A#4']],
             'melody_style': 'arpeggiated'
+        },
+        'K-Pop': {
+            'scale': 'major',
+            'tempo': 120,  # APT. tempo
+            'bass_notes': ['C3', 'G3', 'A3', 'F3'],  # APT.-inspired bass pattern
+            'chord_progression': [['C4', 'E4', 'G4'], ['A4', 'C5', 'E5'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5']],  # C-Am-F-G progression
+            'melody_style': 'catchy_pop'
         },
         'Classical': {
             'scale': 'major',
@@ -141,6 +148,10 @@ def generate_music(genre: str = "Electronic",
         # Add slight low-pass filtering effect
         audio = apply_lowpass_effect(audio, sample_rate)
     
+    elif genre == 'K-Pop':
+        # Add APT.-inspired effects
+        audio = add_kpop_apt_effects(audio, sample_rate, beat_duration, mood_adj)
+    
     elif genre == 'Electronic':
         # Add some digital effects
         audio = add_electronic_effects(audio, sample_rate, beat_duration)
@@ -177,43 +188,53 @@ def generate_bass_line(note_freqs, bass_notes, duration, sample_rate, beat_durat
     notes_per_measure = len(bass_notes)
     measure_duration = beat_duration * 4  # 4 beats per measure
     
+    # APT.-inspired rhythmic pattern (syncopated)
+    apt_rhythm = [1.0, 0.5, 0.8, 0.6, 1.0, 0.3, 0.9, 0.4]  # Intensity pattern
+    
     for i in range(int(duration / measure_duration) + 1):
         measure_start_time = i * measure_duration
         if measure_start_time >= duration:
             break
             
         for j, note in enumerate(bass_notes):
-            note_start_time = measure_start_time + j * beat_duration
-            note_end_time = note_start_time + beat_duration * 0.8  # Slight gap between notes
-            
-            if note_end_time > duration:
-                break
+            # Create APT.-style syncopated rhythm
+            beat_subdivision = 2  # Two hits per beat for APT.-style groove
+            for sub in range(beat_subdivision):
+                note_start_time = measure_start_time + j * beat_duration + sub * (beat_duration / beat_subdivision)
+                note_end_time = note_start_time + (beat_duration / beat_subdivision) * 0.7
                 
-            start_sample = int(note_start_time * sample_rate)
-            end_sample = int(note_end_time * sample_rate)
-            
-            if end_sample <= samples:
-                note_duration = note_end_time - note_start_time
-                t = np.linspace(0, note_duration, end_sample - start_sample)
-                freq = note_freqs[note] * (0.5 if note.endswith('3') else 1.0)  # Octave down for bass
+                if note_end_time > duration:
+                    break
+                    
+                start_sample = int(note_start_time * sample_rate)
+                end_sample = int(note_end_time * sample_rate)
                 
-                # Create bass tone with harmonics
-                wave = 0.6 * np.sin(2 * np.pi * freq * t)
-                wave += 0.2 * np.sin(2 * np.pi * freq * 2 * t)  # Second harmonic
-                wave += 0.1 * np.sin(2 * np.pi * freq * 3 * t)  # Third harmonic
-                
-                # Apply envelope to each note
-                env_attack = int(0.01 * sample_rate)  # 10ms attack
-                env_decay = int(0.1 * sample_rate)   # 100ms decay
-                envelope = np.ones(len(wave))
-                
-                if len(wave) > env_attack:
-                    envelope[:env_attack] = np.linspace(0, 1, env_attack)
-                if len(wave) > env_decay:
-                    envelope[-env_decay:] *= np.linspace(1, 0.3, env_decay)
-                
-                wave *= envelope
-                audio[start_sample:end_sample] += wave
+                if end_sample <= samples:
+                    note_duration = note_end_time - note_start_time
+                    t = np.linspace(0, note_duration, end_sample - start_sample)
+                    freq = note_freqs[note] * (0.5 if note.endswith('3') else 1.0)
+                    
+                    # APT.-style bass intensity
+                    rhythm_idx = (j * beat_subdivision + sub) % len(apt_rhythm)
+                    intensity = apt_rhythm[rhythm_idx]
+                    
+                    # Create bass tone with harmonics
+                    wave = 0.6 * intensity * np.sin(2 * np.pi * freq * t)
+                    wave += 0.2 * intensity * np.sin(2 * np.pi * freq * 2 * t)
+                    wave += 0.1 * intensity * np.sin(2 * np.pi * freq * 3 * t)
+                    
+                    # Apply envelope with APT.-style punch
+                    env_attack = int(0.005 * sample_rate)  # Shorter attack for punch
+                    env_decay = int(0.08 * sample_rate)    # Quick decay
+                    envelope = np.ones(len(wave))
+                    
+                    if len(wave) > env_attack:
+                        envelope[:env_attack] = np.linspace(0, 1, env_attack)
+                    if len(wave) > env_decay:
+                        envelope[-env_decay:] *= np.linspace(1, 0.2, env_decay)
+                    
+                    wave *= envelope
+                    audio[start_sample:end_sample] += wave
     
     return audio
 
@@ -315,6 +336,19 @@ def generate_melody(note_freqs, scale, style, duration, sample_rate, beat_durati
                 current_note = scale[idx]
             melody_notes.append(current_note if 'current_note' in locals() else scale[scale_len//2])
     
+    elif style == 'catchy_pop':
+        # K-Pop style - catchy, memorable patterns with rhythmic emphasis
+        # Inspired by APT.'s melodic patterns
+        apt_pattern = [0, 2, 4, 2, 0, 4, 2, 0]  # Catchy pop pattern
+        for i in range(int(duration / note_duration)):
+            # Create variation every 8 notes (like APT.'s verse/chorus structure)
+            measure = i // 8
+            if measure % 2 == 0:  # Verse-like pattern
+                idx = apt_pattern[i % len(apt_pattern)]
+            else:  # Chorus-like pattern - higher energy
+                idx = (apt_pattern[i % len(apt_pattern)] + 1) % scale_len
+            melody_notes.append(scale[min(idx, scale_len - 1)])
+    
     elif style == 'powerful':
         # Rock style - powerful, rhythmic
         for i in range(int(duration / note_duration)):
@@ -377,6 +411,24 @@ def apply_lowpass_effect(audio, sample_rate):
     return audio
 
 
+def add_kpop_apt_effects(audio, sample_rate, beat_duration, mood_adj):
+    """Add K-Pop APT.-inspired effects"""
+    # Create APT.-style rhythmic emphasis
+    t = np.linspace(0, len(audio) / sample_rate, len(audio))
+    
+    # APT.-style syncopated rhythm emphasis
+    beat_freq = 1.0 / beat_duration
+    syncopation = 1 + 0.3 * np.sin(2 * np.pi * beat_freq * t) + 0.2 * np.sin(2 * np.pi * beat_freq * 1.5 * t)
+    
+    # Add subtle brightness (like APT.'s crisp production)
+    brightness = 1 + 0.15 * mood_adj['brightness'] * np.sin(2 * np.pi * 8 * t)
+    
+    # APT.-style punch with slight compression effect
+    compressed = np.tanh(audio * 1.2) * 0.9
+    
+    return compressed * syncopation * brightness
+
+
 def add_electronic_effects(audio, sample_rate, beat_duration):
     """Add electronic music effects"""
     # Add slight tremolo
@@ -393,8 +445,19 @@ def add_rock_distortion(audio, energy):
     return 0.7 * distorted + 0.3 * audio  # Blend with clean signal
 
 if __name__ == "__main__":
-    # Test the function
+    # Test the function with multiple genres
     print("Testing music generation...")
-    test_audio = generate_music(genre="Electronic", mood="Happy", duration_seconds=5)
-    print(f"Generated audio shape: {test_audio.shape}")
-    print(f"Audio duration: {len(test_audio) / 44100:.2f} seconds")
+    
+    # Test K-Pop (APT.-inspired)
+    print("\n🎵 Generating K-Pop (APT.-inspired) music...")
+    apt_audio = generate_music(genre="K-Pop", mood="Energetic", duration_seconds=8)
+    print(f"K-Pop audio shape: {apt_audio.shape}")
+    print(f"K-Pop audio duration: {len(apt_audio) / 44100:.2f} seconds")
+    
+    # Test Electronic
+    print("\n🎛️ Generating Electronic music...")
+    electronic_audio = generate_music(genre="Electronic", mood="Happy", duration_seconds=5)
+    print(f"Electronic audio shape: {electronic_audio.shape}")
+    print(f"Electronic audio duration: {len(electronic_audio) / 44100:.2f} seconds")
+    
+    print("\n✨ All tests completed! K-Pop genre with APT.-inspired patterns is ready.")

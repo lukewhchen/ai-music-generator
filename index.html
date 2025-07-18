@@ -275,8 +275,8 @@
         <h1>🎵 AI Music Generator - Melodic Version</h1>
         
         <div class="update-banner">
-            <h3>🎼 NEW: Real Melodies & Musical Structure!</h3>
-            <p><strong>Updated with proper chord progressions, bass lines, and melodic patterns!</strong> Each genre now features authentic musical elements including scales, rhythms, and harmonic progressions.</p>
+            <h3>� NEW: K-Pop APT.-Inspired Genre Added!</h3>
+            <p><strong>Now featuring K-Pop with APT.-style catchy patterns and rhythms!</strong> Experience ROSÉ & Bruno Mars inspired beats with syncopated rhythms, bright production, and catchy pop melodies plus all existing genres with authentic musical structure.</p>
         </div>
 
         <div class="tab-buttons">
@@ -326,6 +326,46 @@
                                 <span class="feature-tag">Floating</span>
                             </div>
                             <button class="play-button" id="btn-electronic-mysterious">▶️ Play Melodic Sample</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- K-Pop Samples -->
+                <div class="genre-section">
+                    <h3>🎵 K-Pop (APT.-Inspired)</h3>
+                    <div class="samples-grid">
+                        <div class="sample-card" onclick="playSample('kpop-energetic')">
+                            <div class="sample-title">K-Pop + Energetic</div>
+                            <div class="sample-description">APT.-inspired catchy patterns with syncopated rhythms</div>
+                            <div class="sample-features">
+                                <span class="feature-tag">Major Scale</span>
+                                <span class="feature-tag">Catchy Pop</span>
+                                <span class="feature-tag">C-Am-F-G</span>
+                                <span class="feature-tag">120 BPM</span>
+                            </div>
+                            <button class="play-button" id="btn-kpop-energetic">▶️ Play APT.-Style Sample</button>
+                        </div>
+                        <div class="sample-card" onclick="playSample('kpop-happy')">
+                            <div class="sample-title">K-Pop + Happy</div>
+                            <div class="sample-description">Bright K-Pop with verse-chorus structure and melodic hooks</div>
+                            <div class="sample-features">
+                                <span class="feature-tag">Major Scale</span>
+                                <span class="feature-tag">Syncopated</span>
+                                <span class="feature-tag">Pop Hooks</span>
+                                <span class="feature-tag">Bright</span>
+                            </div>
+                            <button class="play-button" id="btn-kpop-happy">▶️ Play APT.-Style Sample</button>
+                        </div>
+                        <div class="sample-card" onclick="playSample('kpop-mysterious')">
+                            <div class="sample-title">K-Pop + Mysterious</div>
+                            <div class="sample-description">Darker K-Pop with atmospheric production and catchy rhythms</div>
+                            <div class="sample-features">
+                                <span class="feature-tag">Major Scale</span>
+                                <span class="feature-tag">Atmospheric</span>
+                                <span class="feature-tag">Catchy</span>
+                                <span class="feature-tag">Compressed</span>
+                            </div>
+                            <button class="play-button" id="btn-kpop-mysterious">▶️ Play APT.-Style Sample</button>
                         </div>
                     </div>
                 </div>
@@ -503,6 +543,7 @@
                         <label for="genre">🎸 Genre:</label>
                         <select id="genre" name="genre">
                             <option value="Electronic">Electronic - Minor scale, arpeggiated melodies</option>
+                            <option value="K-Pop">K-Pop - Major scale, APT.-inspired catchy patterns</option>
                             <option value="Classical">Classical - Major scale, stepwise motion</option>
                             <option value="Lo-fi Hip-Hop">Lo-fi Hip-Hop - Pentatonic, relaxed feel</option>
                             <option value="Ambient">Ambient - Dorian mode, floating tones</option>
@@ -601,6 +642,13 @@
                 chordProgression: [['C4', 'D#4', 'G4'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5'], ['D#4', 'G4', 'A#4']],
                 melodyStyle: 'arpeggiated'
             },
+            'K-Pop': {
+                scale: 'major',
+                tempo: 120,
+                bassNotes: ['C3', 'G3', 'A3', 'F3'],
+                chordProgression: [['C4', 'E4', 'G4'], ['A4', 'C5', 'E5'], ['F4', 'A4', 'C5'], ['G4', 'B4', 'D5']],
+                melodyStyle: 'catchy_pop'
+            },
             'Classical': {
                 scale: 'major',
                 tempo: 120,
@@ -645,6 +693,9 @@
             'electronic-happy': { genre: 'Electronic', mood: 'Happy', duration: 8 },
             'electronic-energetic': { genre: 'Electronic', mood: 'Energetic', duration: 8 },
             'electronic-mysterious': { genre: 'Electronic', mood: 'Mysterious', duration: 8 },
+            'kpop-energetic': { genre: 'K-Pop', mood: 'Energetic', duration: 8 },
+            'kpop-happy': { genre: 'K-Pop', mood: 'Happy', duration: 8 },
+            'kpop-mysterious': { genre: 'K-Pop', mood: 'Mysterious', duration: 8 },
             'classical-relaxed': { genre: 'Classical', mood: 'Relaxed', duration: 8 },
             'classical-sad': { genre: 'Classical', mood: 'Sad', duration: 8 },
             'classical-happy': { genre: 'Classical', mood: 'Happy', duration: 8 },
@@ -745,6 +796,12 @@
                 // Add genre-specific effects
                 if (genre === 'Lo-fi Hip-Hop') {
                     sample += (Math.random() - 0.5) * 0.02; // Vinyl noise
+                } else if (genre === 'K-Pop') {
+                    // APT.-inspired effects: compression and brightness
+                    sample = Math.tanh(sample * 1.2) * 0.9; // Compression
+                    const t = i / sampleRate;
+                    const syncopation = 1 + 0.1 * Math.sin(2 * Math.PI * (1/beatDuration) * t);
+                    sample *= syncopation;
                 } else if (genre === 'Rock') {
                     sample = Math.tanh(sample * (1 + moodAdj.energy)) / (1 + moodAdj.energy); // Distortion
                 }
@@ -890,6 +947,21 @@
                     const idx = i % 2 === 0 ? 
                         strongDegrees[Math.floor(Math.random() * strongDegrees.length)] :
                         Math.floor(Math.random() * scale.length);
+                    melodyNotes.push(scale[Math.min(idx, scale.length - 1)]);
+                }
+            } else if (style === 'catchy_pop') {
+                // K-Pop APT.-inspired catchy patterns
+                const aptPattern = [0, 2, 4, 2, 0, 4, 2, 0];
+                for (let i = 0; i < Math.ceil(duration / noteDuration); i++) {
+                    const measure = Math.floor(i / 8);
+                    let idx;
+                    if (measure % 2 === 0) {
+                        // Verse-like pattern
+                        idx = aptPattern[i % aptPattern.length];
+                    } else {
+                        // Chorus-like pattern - higher energy
+                        idx = (aptPattern[i % aptPattern.length] + 1) % scale.length;
+                    }
                     melodyNotes.push(scale[Math.min(idx, scale.length - 1)]);
                 }
             }
