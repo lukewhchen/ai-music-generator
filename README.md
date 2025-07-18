@@ -1,28 +1,9 @@
-# 🎵 Vibe Music Gene## � How to Use
+# 🎵 AI Music Generator
 
-1. **[Open the vi# Clone the repository
-git clone https://github.com/lukewhchen/ai-music-generator.git
-
-# Open the main file
-open index.html
-```
-
-The repository also includes `generate_music_local.py` - a Python version with the same musical algorithms for server-side use.
-
-## � License
-
-MIT License - feel free to use, modify, and share!
-
----
-
-**[🎵 Start Making Vibes Now →](https://lukewhchen.github.io/ai-music-generator/)**tps://lukewhchen.github.io/ai-music-generator/)**
-2. **Browse samples** or **create custom music**
-3. **Click play** and enjoy!
-
-That's it! No installation, no setup, just pure musical creativity.Create beautiful, melodic music instantly in your browser! No downloads, no setup required.
+Create beautiful, melodic music instantly in your browser! No downloads, no setup required.
 
 ## 🌐 **Try It Live**
-### **[🎵 Launch Vibe Generator →](https://lukewhchen.github.io/ai-music-generator/)**
+### **[🎵 Launch Music Generator →](https://lukewhchen.github.io/ai-music-generator/)**
 
 *💡 Tip: Right-click the link above and select "Open in new tab" to keep this README open while you explore!*
 
@@ -82,4 +63,4 @@ MIT License - feel free to use, modify, and share!
 
 ---
 
-**[🎵 Start Making Vibes Now →](https://lukewhchen.github.io/ai-music-generator/)**
+**[🎵 Start Making Music Now →](https://lukewhchen.github.io/ai-music-generator/)**
